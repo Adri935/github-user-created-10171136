@@ -10,17 +10,34 @@ function formatDate(dateString) {
   return date.toISOString().split('T')[0];
 }
 
+// Calculate account age in years
+function calculateAccountAge(createdAt) {
+  const createdDate = new Date(createdAt);
+  const now = new Date();
+  const diffMs = now - createdDate;
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  const years = Math.floor(diffDays / 365);
+  return years;
+}
+
 // Handle form submission
 document.getElementById('github-user-r8s2').addEventListener('submit', async function(e) {
   e.preventDefault();
   
   const username = document.getElementById('username').value.trim();
   const token = getUrlParameter('token');
+  const statusElement = document.getElementById('github-status');
+  const createdAtElement = document.getElementById('github-created-at');
+  const accountAgeElement = document.getElementById('github-account-age');
   
   if (!username) {
-    document.getElementById('github-created-at').textContent = 'Please enter a username';
+    createdAtElement.textContent = 'Please enter a username';
+    accountAgeElement.textContent = '';
     return;
   }
+  
+  // Announce lookup start
+  statusElement.textContent = `Looking up user ${username}...`;
   
   try {
     // Build API URL
@@ -53,8 +70,19 @@ document.getElementById('github-user-r8s2').addEventListener('submit', async fun
     
     // Format and display creation date
     const createdAt = formatDate(userData.created_at);
-    document.getElementById('github-created-at').textContent = createdAt;
+    createdAtElement.textContent = createdAt;
+    
+    // Calculate and display account age
+    const accountAge = calculateAccountAge(userData.created_at);
+    accountAgeElement.textContent = `Account age: ${accountAge} years`;
+    
+    // Announce success
+    statusElement.textContent = `Successfully fetched data for user ${username}`;
   } catch (error) {
-    document.getElementById('github-created-at').textContent = `Error: ${error.message}`;
+    createdAtElement.textContent = `Error: ${error.message}`;
+    accountAgeElement.textContent = '';
+    
+    // Announce error
+    statusElement.textContent = `Failed to fetch data for user ${username}: ${error.message}`;
   }
 });
